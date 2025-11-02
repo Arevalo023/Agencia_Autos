@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 
 /**
- * OrdenesView - Interfaz mejorada
+ * OrdenesView 
  * Buscar, ver, modificar y eliminar órdenes de servicio
  */
 public class OrdenesView extends JFrame {
@@ -223,7 +223,7 @@ public class OrdenesView extends JFrame {
 
         // Próximo Servicio
         y += 45;
-        agregarLabel(panelDetalle, "Próximo Servicio:", 20, y);
+        agregarLabel(panelDetalle, "Fecha del Servicio:", 20, y);
         txtProximoServicio = crearTextField();
         txtProximoServicio.setEditable(false);
         txtProximoServicio.setBounds(180, y, 150, 30);
@@ -815,6 +815,8 @@ public class OrdenesView extends JFrame {
             }
         });
 
+        
+        
         btnBuscarNombre.addActionListener(e -> {
             String nombre = txtBuscarNombre.getText().trim();
             if (nombre.isEmpty()) return;
@@ -1016,10 +1018,48 @@ public class OrdenesView extends JFrame {
 
             Usuario actual = AuthController.getUsuarioActual();
             if (actual == null) {
-                JOptionPane.showMessageDialog(this, "No hay usuario en sesion.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No hay usuario en sesion.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
                 return;
             }
 
+            // ====== VALIDACIÓN DE FECHA ANTES DE FINALIZAR ======
+            // 1. Leemos lo que está en el campo "Próximo Servicio"
+            String proxTxt = txtProximoServicio.getText().trim();
+            if (!proxTxt.isEmpty()) {
+                try {
+                    LocalDate proxDate = LocalDate.parse(proxTxt); // formato yyyy-MM-dd
+                    LocalDate hoy = LocalDate.now();
+
+                    // Si la fecha de próximo servicio es después de hoy,
+                    // NO permitimos finalizar todavía.
+                    if (proxDate.isAfter(hoy)) {
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "No puedes marcar FINALIZADO antes de la fecha programada (" + proxDate + ").",
+                                "Acción no permitida",
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+                } catch (Exception exFecha) {
+                    // Si hay una fecha mal escrita y no la puedo parsear, también bloqueo
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "La fecha de Próximo Servicio no es válida (usa yyyy-MM-dd). Corrígela antes de finalizar.",
+                            "Fecha inválida",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+            }
+            // ====== FIN VALIDACIÓN ======
+
+            // Pedimos nota para la bitácora
             String nota = JOptionPane.showInputDialog(
                     this,
                     "Nota para bitacora (ej: 'Servicio terminado y entregado'):",
@@ -1028,6 +1068,7 @@ public class OrdenesView extends JFrame {
             );
             if (nota == null) return;
 
+            // Aquí sí intentamos cambiar a FINALIZADO usando el State controller
             String resultado = controlEstado.cambiarAFinalizado(
                     actual.getIdUsuario(),
                     nota
@@ -1046,6 +1087,7 @@ public class OrdenesView extends JFrame {
                 );
             }
         });
+
 
         btnAgregarRefaccion.addActionListener(e -> {
             if (ordenActual == null) return;

@@ -84,7 +84,7 @@ public class NuevaOrdenController {
 
         return ordenServicioDAO.insertarNuevaOrden(
                 cli.getIdCliente(),
-                veh.getIdVehiculo(),
+                notas, veh.getIdVehiculo(),
                 tec.getIdTecnico(),
                 tipo.getIdTipoServicio(),
                 manoObra,

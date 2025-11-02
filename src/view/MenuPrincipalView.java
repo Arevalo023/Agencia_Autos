@@ -276,24 +276,18 @@ public class MenuPrincipalView extends JFrame {
             vista.setVisible(true);
         });
 
-        // Próximos servicios
+     // Próximos servicios
         btnProximos.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                    MenuPrincipalView.this,
-                    "Abrir listado de próximos servicios.",
-                    "Próximos Servicios",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+            ProximosServiciosView ps = new ProximosServiciosView();
+            ps.setVisible(true);
         });
 
-        // Dashboard
+        // Dashboard (gráfica de estatus)
         btnDashboard.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                    MenuPrincipalView.this,
-                    "Abrir dashboard (En espera / En proceso / Finalizado).",
-                    "Dashboard",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+
+         
+            DashboardView dash = new DashboardView(controller);
+            dash.setVisible(true);
         });
 
         // Cerrar sesión

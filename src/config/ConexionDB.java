@@ -16,7 +16,6 @@ import java.sql.SQLException;
 */
 public class ConexionDB {
  
-    // === Ajusta estos datos a tu entorno ===
    // private static final String URL      = "jdbc:mysql://localhost:3306/agencia_autos";
 	private static final String URL = 
 		    "jdbc:mysql://localhost:3306/agencia_autos"
@@ -25,7 +24,7 @@ public class ConexionDB {
 		  + "&serverTimezone=UTC";
  
 	private static final String USER     = "root";
-    private static final String PASSWORD = "!Clubamerica18itzel";
+    private static final String PASSWORD = "Carro2020!";
  
     // Instancia única (Singleton)
     private static Connection conexionUnica = null;
@@ -43,7 +42,7 @@ public class ConexionDB {
             if (conexionUnica == null || conexionUnica.isClosed()) {
  
                 // 1) Cargar el driver del conector MySQL.
-                //    (Necesitas tener el .jar del conector mysql añadido al Build Path del proyecto)
+                //    
                 Class.forName("com.mysql.cj.jdbc.Driver");
  
                 // 2) Crear la conexión real física
@@ -62,7 +61,7 @@ public class ConexionDB {
      * Cierra la conexión activa a la BD manualmente.
      * Se debe llamar cuando el usuario CIERRE SESIÓN o cuando el sistema sale.
      *
-     * Este método es importante para:
+     * 
      *  - Punto 3 de la rúbrica: "cerrar base de datos y destruir variables globales".
      */
     public static void closeConnection() {

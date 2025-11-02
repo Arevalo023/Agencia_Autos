@@ -28,7 +28,7 @@ public class NuevaOrdenView extends JFrame {
     private static final Color TEXT_PRIMARY = new Color(17, 24, 39);
     private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
 
-    // Controller (en vez de tener todos los DAO aquí)
+    // Controller 
     private final NuevaOrdenController controller = new NuevaOrdenController();
 
     // Componentes
@@ -141,8 +141,17 @@ public class NuevaOrdenView extends JFrame {
         cardPanel.add(createFieldRow("Mano de Obra ($):", txtManoObra));
         cardPanel.add(Box.createVerticalStrut(12));
 
+     // ===== Fecha del servicio con selector =====
         txtProximoServicio = createStyledTextField();
-        cardPanel.add(createFieldRow("Próximo Servicio (yyyy-MM-dd):", txtProximoServicio));
+        JButton btnPickFecha = createDatePickerButton();
+
+        JPanel fechaRow = new JPanel(new BorderLayout(8, 0));
+        fechaRow.setBackground(CARD_BG);
+        fechaRow.add(txtProximoServicio, BorderLayout.CENTER);
+        fechaRow.add(btnPickFecha, BorderLayout.EAST);
+
+        cardPanel.add(createFieldRow("Fecha del servicio (yyyy-MM-dd):", fechaRow));
+
         cardPanel.add(Box.createVerticalStrut(20));
         cardPanel.add(createSeparator());
         cardPanel.add(Box.createVerticalStrut(20));
@@ -504,6 +513,60 @@ public class NuevaOrdenView extends JFrame {
             bloquearEdicion();
         }
     }
+    
+    private JButton createDatePickerButton() {
+        JButton btn = new JButton("📅");
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btn.setForeground(TEXT_PRIMARY);
+        btn.setBackground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new java.awt.Color(209, 213, 219), 1),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Acción: abrir selector de fecha
+        btn.addActionListener(e -> {
+            // Spinner de fecha
+            JSpinner spinnerFecha = new JSpinner(
+                    new SpinnerDateModel(
+                            new java.util.Date(), // valor inicial = hoy
+                            null,                 // mínimo
+                            null,                 // máximo
+                            java.util.Calendar.DAY_OF_MONTH
+                    )
+            );
+            spinnerFecha.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+            // Formato visual amigable dentro del spinner
+            JSpinner.DateEditor editor = new JSpinner.DateEditor(spinnerFecha, "yyyy-MM-dd");
+            spinnerFecha.setEditor(editor);
+
+            // Mostramos diálogo emergente
+            int opcion = JOptionPane.showConfirmDialog(
+                    this,
+                    spinnerFecha,
+                    "Seleccionar fecha del servicio",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (opcion == JOptionPane.OK_OPTION) {
+                java.util.Date seleccion = (java.util.Date) spinnerFecha.getValue();
+                // Lo convertimos a LocalDate y lo mandamos al textfield
+
+                LocalDate ld = seleccion.toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
+
+                txtProximoServicio.setText(ld.toString()); // yyyy-MM-dd
+            }
+        });
+
+        return btn;
+    }
+
 
     private void bloquearEdicion() {
         btnGuardar.setEnabled(false);

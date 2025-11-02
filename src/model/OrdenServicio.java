@@ -167,6 +167,16 @@ public void setFechaCierre(LocalDateTime fechaCierre) {
         // mano de obra + suma de refacciones
         return manoObra + totalRefacciones;
     }
+    
+    private String entregadoPor;
+
+    public String getEntregadoPor() {
+        return entregadoPor;
+    }
+    public void setEntregadoPor(String entregadoPor) {
+        this.entregadoPor = entregadoPor;
+    }
+
 
     @Override
     public String toString() {
