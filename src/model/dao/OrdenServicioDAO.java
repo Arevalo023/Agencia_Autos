@@ -1027,6 +1027,48 @@ public class OrdenServicioDAO {
 
 		    return result;
 		}
+	// Conteos por estatus para UNA fecha específica (fecha_creacion)
+	    public DashboardController.ConteoEstatus contarPorEstatusEnFecha(LocalDate fecha) {
+
+	        DashboardController.ConteoEstatus c = new DashboardController.ConteoEstatus();
+
+	        String sql =
+	            "SELECT estatus, COUNT(*) AS total " +
+	            "FROM ordenes " +
+	            "WHERE DATE(fecha_creacion) = ? " +
+	            "GROUP BY estatus";
+
+	        try (Connection conn = ConexionDB.getConnection();
+	             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	            ps.setDate(1, java.sql.Date.valueOf(fecha));
+
+	            try (ResultSet rs = ps.executeQuery()) {
+	                while (rs.next()) {
+	                    String est = rs.getString("estatus");
+	                    int n = rs.getInt("total");
+
+	                    switch (est) {
+	                        case "EN_ESPERA":
+	                            c.espera = n;
+	                            break;
+	                        case "EN_PROCESO":
+	                            c.proceso = n;
+	                            break;
+	                        case "FINALIZADO":
+	                            c.finalizado = n;
+	                            break;
+	                    }
+	                }
+	            }
+
+	        } catch (SQLException e) {
+	            System.err.println("Error contarPorEstatusEnFecha(): " + e.getMessage());
+	        }
+
+	        return c;
+	    }
+
 
 	   
 }

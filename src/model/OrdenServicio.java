@@ -1,5 +1,6 @@
 package model;
 
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -176,7 +177,6 @@ public void setFechaCierre(LocalDateTime fechaCierre) {
     public void setEntregadoPor(String entregadoPor) {
         this.entregadoPor = entregadoPor;
     }
-
 
     @Override
     public String toString() {
