@@ -15,7 +15,7 @@ public class NuevaOrdenController {
     private final TipoServicioDAO tipoServicioDAO = new TipoServicioDAO();
     private final OrdenServicioDAO ordenServicioDAO = new OrdenServicioDAO();
 
-    // --- Sesión / permisos ---
+    // --- SesiÃ³n / permisos ---
     public Usuario getUsuarioActual() {
         return AuthController.getUsuarioActual();
     }
@@ -25,7 +25,7 @@ public class NuevaOrdenController {
         return u != null && "ADMIN".equalsIgnoreCase(u.getRol());
     }
 
-    // --- Clientes / Vehículos ---
+    // --- Clientes / VehÃ­culos ---
     public List<Cliente> getClientesActivos() {
         List<Cliente> activos = new ArrayList<>();
         for (Cliente c : clienteDAO.listar()) {
@@ -46,7 +46,7 @@ public class NuevaOrdenController {
         return activos;
     }
 
-    // --- Técnicos / Tipos servicio ---
+    // --- TÃ©cnicos / Tipos servicio ---
     public List<Tecnico> getTecnicosActivos() {
         List<Tecnico> activos = new ArrayList<>();
         for (Tecnico t : tecnicoDAO.listar()) {
@@ -75,16 +75,18 @@ public class NuevaOrdenController {
             TipoServicio tipo,
             double manoObra,
             String notas,
-            LocalDate proximoServicio
+            LocalDate proximoServicio,
+            String entregadoPor
     ) {
         Usuario actual = getUsuarioActual();
         if (actual == null) {
-            return null; // la vista mostrará el error
+            return null; // la vista mostrarÃ¡ el error
         }
 
         return ordenServicioDAO.insertarNuevaOrden(
                 cli.getIdCliente(),
-                notas, veh.getIdVehiculo(),
+                entregadoPor,                 // ya mandamos quiÃ©n entrega
+                veh.getIdVehiculo(),
                 tec.getIdTecnico(),
                 tipo.getIdTipoServicio(),
                 manoObra,
@@ -113,8 +115,9 @@ public class NuevaOrdenController {
                 "Fecha: " + LocalDate.now() + "\n" +
                 "\n" +
                 "Cliente: " + clienteTxt + "\n" +
-                "Vehículo (placa): " + placaTxt + "\n" +
-                "Técnico asignado: " + tecnicoTxt + "\n" +
+                "Entregado por: " + (o.getEntregadoPor() != null ? o.getEntregadoPor() : "") + "\n" +
+                "VehÃ­culo (placa): " + placaTxt + "\n" +
+                "TÃ©cnico asignado: " + tecnicoTxt + "\n" +
                 "Tipo de servicio: " + tipoTxt + "\n" +
                 "\n" +
                 "---- COSTOS INICIALES ----\n" +
@@ -122,12 +125,12 @@ public class NuevaOrdenController {
                 String.format("Refacciones:      $%.2f\n", refTotal) +
                 String.format("TOTAL ESTIMADO:   $%.2f\n", total) +
                 "\n" +
-                "Próximo servicio: " +
+                "PrÃ³ximo servicio: " +
                 (o.getProximoServicio() != null ? o.getProximoServicio() : "N/A") + "\n" +
                 "\n" +
                 "Notas:\n" +
                 (o.getNotas() != null ? o.getNotas() : "") + "\n" +
                 "--------------------------------------\n" +
-                "     ¡Gracias por su preferencia!\n";
+                "     Â¡Gracias por su preferencia!\n";
     }
 }

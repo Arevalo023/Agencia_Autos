@@ -3,16 +3,18 @@ package view;
 import controller.AuthController;
 import controller.NuevaOrdenController;
 import model.*;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import com.toedter.calendar.JDateChooser;
+import java.util.Date;
 
 public class NuevaOrdenView extends JFrame {
 
@@ -28,8 +30,10 @@ public class NuevaOrdenView extends JFrame {
     private static final Color TEXT_PRIMARY = new Color(17, 24, 39);
     private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
 
-    // Controller 
+    // Controller
     private final NuevaOrdenController controller = new NuevaOrdenController();
+    
+    
 
     // Componentes
     private JComboBox<Cliente> cbCliente;
@@ -38,12 +42,17 @@ public class NuevaOrdenView extends JFrame {
     private JComboBox<TipoServicio> cbTipoServicio;
     private JTextField txtManoObra;
     private JTextArea txtNotas;
-    private JTextField txtProximoServicio;
+    private JDateChooser dcProximoServicio;
+    private JTextField txtEntregadoPor;
+
     private JButton btnGuardar;
     private JButton btnCerrar;
     private JButton btnVerOrdenes;
 
     private String ultimoTicketTexto = null;
+    
+    private boolean yaPregunteEntregadoPor = false;
+
 
     public NuevaOrdenView() {
         setTitle("Nueva Orden de Servicio");
@@ -122,18 +131,28 @@ public class NuevaOrdenView extends JFrame {
         // --- Sección Cliente ---
         cardPanel.add(createSectionLabel("Información del Cliente"));
         cardPanel.add(Box.createVerticalStrut(15));
+
         cardPanel.add(createFieldRow("Cliente:", cbCliente = createStyledComboBox()));
         cardPanel.add(Box.createVerticalStrut(12));
+
         cardPanel.add(createFieldRow("Vehículo (Placa):", cbVehiculo = createStyledComboBox()));
+        cardPanel.add(Box.createVerticalStrut(12));
+
+        //  quién entrega el carro
+        txtEntregadoPor = createStyledTextField();
+        cardPanel.add(createFieldRow("Entregado por:", txtEntregadoPor));
         cardPanel.add(Box.createVerticalStrut(20));
+
         cardPanel.add(createSeparator());
         cardPanel.add(Box.createVerticalStrut(20));
 
         // --- Sección Servicio ---
         cardPanel.add(createSectionLabel("Detalles del Servicio"));
         cardPanel.add(Box.createVerticalStrut(15));
+
         cardPanel.add(createFieldRow("Técnico Asignado:", cbTecnico = createStyledComboBox()));
         cardPanel.add(Box.createVerticalStrut(12));
+
         cardPanel.add(createFieldRow("Tipo de Servicio:", cbTipoServicio = createStyledComboBox()));
         cardPanel.add(Box.createVerticalStrut(12));
 
@@ -141,17 +160,15 @@ public class NuevaOrdenView extends JFrame {
         cardPanel.add(createFieldRow("Mano de Obra ($):", txtManoObra));
         cardPanel.add(Box.createVerticalStrut(12));
 
-     // ===== Fecha del servicio con selector =====
-        txtProximoServicio = createStyledTextField();
-        JButton btnPickFecha = createDatePickerButton();
+        // ===== Fecha del servicio con JDateChooser (.jar) =====
+        dcProximoServicio = new JDateChooser();
+        dcProximoServicio.setDateFormatString("yyyy-MM-dd");
+        dcProximoServicio.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        dcProximoServicio.setPreferredSize(new Dimension(200, 30));
+        dcProximoServicio.setMinSelectableDate(java.sql.Date.valueOf("1980-01-01"));
+        dcProximoServicio.setMaxSelectableDate(java.sql.Date.valueOf("2100-12-31"));
 
-        JPanel fechaRow = new JPanel(new BorderLayout(8, 0));
-        fechaRow.setBackground(CARD_BG);
-        fechaRow.add(txtProximoServicio, BorderLayout.CENTER);
-        fechaRow.add(btnPickFecha, BorderLayout.EAST);
-
-        cardPanel.add(createFieldRow("Fecha del servicio (yyyy-MM-dd):", fechaRow));
-
+        cardPanel.add(createFieldRow("Fecha del servicio:", dcProximoServicio));
         cardPanel.add(Box.createVerticalStrut(20));
         cardPanel.add(createSeparator());
         cardPanel.add(Box.createVerticalStrut(20));
@@ -302,6 +319,43 @@ public class NuevaOrdenView extends JFrame {
 
         btnVerOrdenes.addActionListener(e -> new OrdenesView().setVisible(true));
 
+        txtEntregadoPor.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                // Si ya preguntamos, no volvemos a sacar el mensaje
+                if (yaPregunteEntregadoPor) return;
+
+                Cliente cli = (Cliente) cbCliente.getSelectedItem();
+                if (cli == null) return;
+
+                String nombreCliente = cli.getNombre() + " " + cli.getApellidos();
+
+                int resp = JOptionPane.showConfirmDialog(
+                        NuevaOrdenView.this,
+                        "¿La persona que entrega el vehículo es el mismo cliente?\n\n" +
+                        "Cliente: " + nombreCliente,
+                        "Confirmar 'Entregado por'",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                );
+
+                // Marcar que ya preguntamos, para que no se repita cada vez
+                yaPregunteEntregadoPor = true;
+
+                if (resp == JOptionPane.YES_OPTION) {
+                    // mismo cliente → rellenamos automático
+                    txtEntregadoPor.setText(nombreCliente);
+                    // si NO quieres que lo modifique, descomenta la siguiente línea:
+                    // txtEntregadoPor.setEditable(false);
+                } else if (resp == JOptionPane.NO_OPTION) {
+                    // otro → lo dejamos libre para que escriba
+                    txtEntregadoPor.setText("");
+                    txtEntregadoPor.setEditable(true);
+                }
+                // si cierra la ventana (CANCEL/CLOSE), simplemente lo dejamos vacío y editable
+            }
+        });
+
         btnGuardar.addActionListener(e -> {
             Cliente cli = (Cliente) cbCliente.getSelectedItem();
             Vehiculo veh = (Vehiculo) cbVehiculo.getSelectedItem();
@@ -318,6 +372,29 @@ public class NuevaOrdenView extends JFrame {
                 return;
             }
 
+            String entregadoPor = txtEntregadoPor.getText().trim();
+            if (entregadoPor.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Captura el nombre de la persona que entrega el vehículo.",
+                        "Faltan datos",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // Comparar contra el cliente
+            String nombreCliente = cli.getNombre() + " " + cli.getApellidos();
+            if (!entregadoPor.equalsIgnoreCase(nombreCliente)) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "ATENCIÓN: la persona que entrega el vehículo NO es el propietario.\n" +
+                        "Solicita y verifica una copia de la INE de la persona propietaria.",
+                        "Verificar identidad",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
             double manoObra;
             try {
                 manoObra = Double.parseDouble(txtManoObra.getText().trim());
@@ -332,24 +409,16 @@ public class NuevaOrdenView extends JFrame {
             }
 
             LocalDate prox = null;
-            String proxTxt = txtProximoServicio.getText().trim();
-            if (!proxTxt.isEmpty()) {
-                try {
-                    prox = LocalDate.parse(proxTxt, DateTimeFormatter.ISO_LOCAL_DATE);
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Fecha inválida. Usa yyyy-MM-dd.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
+            Date fechaEscogida = dcProximoServicio.getDate();
+            if (fechaEscogida != null) {
+                prox = fechaEscogida.toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
             }
 
             String notas = txtNotas.getText().trim();
 
-            // crear orden vía controller
+         // crear orden vía controller
             OrdenServicio nueva = controller.crearNuevaOrden(
                     cli,
                     veh,
@@ -357,7 +426,8 @@ public class NuevaOrdenView extends JFrame {
                     tipo,
                     manoObra,
                     notas,
-                    prox
+                    prox,
+                    entregadoPor
             );
 
             if (nueva == null) {
@@ -369,9 +439,16 @@ public class NuevaOrdenView extends JFrame {
                 );
                 return;
             }
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Orden guardada exitosamente.\nFolio: " + nueva.getFolio(),
+                    "Éxito",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
 
             limpiarFormulario();
             mostrarComprobante(nueva);
+
         });
     }
 
@@ -379,7 +456,10 @@ public class NuevaOrdenView extends JFrame {
     private void limpiarFormulario() {
         txtManoObra.setText("");
         txtNotas.setText("");
-        txtProximoServicio.setText("");
+        txtEntregadoPor.setText("");
+        dcProximoServicio.setDate(null);
+        
+        yaPregunteEntregadoPor = false; 
 
         if (cbCliente.getItemCount() > 0) cbCliente.setSelectedIndex(0);
         cargarVehiculosDelClienteSeleccionado();
@@ -513,60 +593,6 @@ public class NuevaOrdenView extends JFrame {
             bloquearEdicion();
         }
     }
-    
-    private JButton createDatePickerButton() {
-        JButton btn = new JButton("📅");
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btn.setForeground(TEXT_PRIMARY);
-        btn.setBackground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new java.awt.Color(209, 213, 219), 1),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        // Acción: abrir selector de fecha
-        btn.addActionListener(e -> {
-            // Spinner de fecha
-            JSpinner spinnerFecha = new JSpinner(
-                    new SpinnerDateModel(
-                            new java.util.Date(), // valor inicial = hoy
-                            null,                 // mínimo
-                            null,                 // máximo
-                            java.util.Calendar.DAY_OF_MONTH
-                    )
-            );
-            spinnerFecha.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-            // Formato visual amigable dentro del spinner
-            JSpinner.DateEditor editor = new JSpinner.DateEditor(spinnerFecha, "yyyy-MM-dd");
-            spinnerFecha.setEditor(editor);
-
-            // Mostramos diálogo emergente
-            int opcion = JOptionPane.showConfirmDialog(
-                    this,
-                    spinnerFecha,
-                    "Seleccionar fecha del servicio",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (opcion == JOptionPane.OK_OPTION) {
-                java.util.Date seleccion = (java.util.Date) spinnerFecha.getValue();
-                // Lo convertimos a LocalDate y lo mandamos al textfield
-
-                LocalDate ld = seleccion.toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate();
-
-                txtProximoServicio.setText(ld.toString()); // yyyy-MM-dd
-            }
-        });
-
-        return btn;
-    }
-
 
     private void bloquearEdicion() {
         btnGuardar.setEnabled(false);
@@ -576,6 +602,7 @@ public class NuevaOrdenView extends JFrame {
         cbTipoServicio.setEnabled(false);
         txtManoObra.setEditable(false);
         txtNotas.setEditable(false);
-        txtProximoServicio.setEditable(false);
+        dcProximoServicio.setEnabled(false);
+        txtEntregadoPor.setEditable(false);
     }
 }

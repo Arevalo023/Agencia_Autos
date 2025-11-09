@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 
 /**
- * OrdenesView 
+ * OrdenesView
  * Buscar, ver, modificar y eliminar órdenes de servicio
  */
 public class OrdenesView extends JFrame {
@@ -59,6 +59,7 @@ public class OrdenesView extends JFrame {
     // Detalle de la orden
     private JTextField txtFolio;
     private JTextField txtCliente;
+    private JTextField txtEntregadoPor;   // entregado por 
     private JTextField txtVehiculo;
     private JComboBox<Tecnico> cbTecnicoEdit;
     private JComboBox<TipoServicio> cbTipoServicioEdit;
@@ -69,7 +70,7 @@ public class OrdenesView extends JFrame {
     private JLabel lblEstatusActual;
     private JButton btnGuardarProximo;
 
-    // Estatus / workflow
+    // Estatus 
     private JButton btnMoverProceso;
     private JButton btnMoverFinalizado;
 
@@ -95,7 +96,7 @@ public class OrdenesView extends JFrame {
     public OrdenesView() {
         setTitle("Gestión de Órdenes de Servicio");
         setSize(1200, 750);
-        setResizable(false);
+        setResizable(true);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
@@ -161,7 +162,7 @@ public class OrdenesView extends JFrame {
         panelBuscar.add(scRes);
 
         JPanel panelDetalle = crearPanelCard("Detalle de la Orden");
-        panelDetalle.setBounds(30, 340, 550, 520);
+        panelDetalle.setBounds(30, 340, 550, 600);
         panelRoot.add(panelDetalle);
 
         int y = 40;
@@ -180,6 +181,14 @@ public class OrdenesView extends JFrame {
         txtCliente.setEditable(false);
         txtCliente.setBounds(180, y, 350, 30);
         panelDetalle.add(txtCliente);
+
+        // NUEVO: Entregado por
+        y += 45;
+        agregarLabel(panelDetalle, "Entregado por:", 20, y);
+        txtEntregadoPor = crearTextField();
+        txtEntregadoPor.setEditable(false);
+        txtEntregadoPor.setBounds(180, y, 350, 30);
+        panelDetalle.add(txtEntregadoPor);
 
         // Vehículo
         y += 45;
@@ -422,7 +431,6 @@ public class OrdenesView extends JFrame {
         }
     }
 
-
     private void cargarComboTecnicos() {
         cbTecnicoEdit.removeAllItems();
         for (Tecnico t : tecnicoDAO.listar()) {
@@ -499,6 +507,18 @@ public class OrdenesView extends JFrame {
 
         String clienteTxt = o.getCliente().getNombre() + " " + o.getCliente().getApellidos();
         txtCliente.setText(clienteTxt);
+
+        String entregado = o.getEntregadoPor();
+        txtEntregadoPor.setText(entregado != null ? entregado : "");
+        // Si no coincide con el cliente, solo destacamos visualmente
+        if (entregado != null && !entregado.isBlank()
+                && !entregado.equalsIgnoreCase(clienteTxt)) {
+            txtEntregadoPor.setForeground(Color.RED);
+            txtEntregadoPor.setToolTipText("El vehículo fue entregado por otra persona. Verificar INE del propietario.");
+        } else {
+            txtEntregadoPor.setForeground(TEXT_COLOR);
+            txtEntregadoPor.setToolTipText(null);
+        }
 
         String placaTxt = (o.getVehiculo() != null) ? o.getVehiculo().getPlaca() : "";
         txtVehiculo.setText(placaTxt);
@@ -634,6 +654,7 @@ public class OrdenesView extends JFrame {
                 "--------------------------------------\n" +
                 "   Gracias por su preferencia!\n";
     }
+
 
     private void guardarTicketComoPNG(String ticketText, String folio) {
         if (ticketText == null || ticketText.isEmpty()) {
@@ -1282,6 +1303,9 @@ public class OrdenesView extends JFrame {
 
         txtFolio.setText("");
         txtCliente.setText("");
+        txtEntregadoPor.setText("");
+        txtEntregadoPor.setForeground(TEXT_COLOR);
+        txtEntregadoPor.setToolTipText(null);
         txtVehiculo.setText("");
         cbTecnicoEdit.setSelectedIndex(-1);
         cbTipoServicioEdit.setSelectedIndex(-1);
